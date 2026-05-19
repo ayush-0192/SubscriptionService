@@ -26,15 +26,40 @@ func main() {
 	// create session
 	session := initSession()
 
+	// create logger
+	infoLog := log.New(os.Stdout,"INFO\n",log.Ldate|log.Ltime)
+	errorLog := log.New(os.Stdout,"ERROR\n",log.Ldate|log.Ltime|log.Lshortfile)
 	// create channels
 
 	// create waitgroups
+	wg := sync.WaitGroup{} 
 
 	// set up application config
+	app := Config {
+		Session : session,
+		DB: db,
+		InfoLog: infoLog,
+		ErrorLog: errorLog,
+		Wait: &wg,
+	}
 
 	// set up mail
 
 	//listen for web connection
+	app.serve()
+}
+
+func (app *Config) serve() {
+	srv := &http.Server{
+		Addr: fmt.Sprintf("%s",webPort),
+		Handler: app.routes(),
+	}
+
+	app.InfoLog.Println("Starting the web server")
+	err := srv.ListenAndServe()
+	if err != nil {
+		log.Panic(err)
+	}
 }
 
 func initDB() *sql.DB {
@@ -108,3 +133,4 @@ func intitRedis() *redis.Pool {
 	}
 	return redisPool
 }
+	 
